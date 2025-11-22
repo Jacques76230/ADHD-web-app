@@ -6,7 +6,8 @@ const calendar =document.getElementById('calendar');
 const newEventModal = document.getElementById('newEventModal');
 const backDrop = document.getElementById('modalBackDrop');
 const eventTitleInput = document.getElementById('EventTitleInput')
-var initialTouchX, initialTouchY, finalTouchX, finalTouchY;
+// Get the button element
+const timeButton = document.querySelector('timeButton');
 
 const weekdays = ['Sunday', 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; //List order does not matter here
 
@@ -20,14 +21,6 @@ let scrollTimeout = null;
 
 
 
-function triggerScrollCooldown() {
-    isScrolling = true;
-    scrollAccumulator = 0; // reset after switching month
-
-    setTimeout(() => {
-        isScrolling = false;
-    }, COOLDOWN);
-}
 
 function openModal(date){
     clicked = date;
@@ -42,6 +35,19 @@ function openModal(date){
     }
     backDrop.style.display = 'block';
 }
+
+// Add a mouseover event listener
+//timeButton.addEventListener('mouseover', () => {
+  // Change the button's background color
+//   timeButton.style.backgroundColor = '#cd8888a3';
+//});
+
+// Add a mouseout event listener
+//timeButton.addEventListener('mouseout', () => {
+  // Change the button's background color back to its original color
+//  timeButton.style.backgroundColor = '#eae7eafb';
+//});
+
 function load(){
     const dt = new Date();
 
@@ -70,7 +76,7 @@ function load(){
     document.getElementById('monthDisplay').innerText = `${dt.toLocaleDateString('en-uk',{ month: 'long'})} ${year}`;
 
     remainder = (paddingDays+daysInMonth)%7
-    remainder ==0 ? totday = paddingDays+daysInMonth : totday = (7-remainder)+paddingDays+daysInMonth  // calculate the number of padding days at the end for rectangualar matrix with
+    remainder ==0 ? totday = paddingDays+daysInMonth : totday = (7-remainder)+paddingDays+daysInMonth  // calculate the number of padding days for rectangualar matrix with
 
     calendar.innerHTML= ''; // line to wipe out the previous calendar every time the initButton function is called 
      for(let i = 1; i <= totday; i++){
@@ -105,6 +111,14 @@ function saveEvent(){
 
 }
 
+function triggerScrollCooldown() {
+    isScrolling = true;
+    scrollAccumulator = 0; // reset after switching month
+
+    setTimeout(() => {
+        isScrolling = false;
+    }, COOLDOWN);
+}
 
 window.onload = function () {
 
