@@ -2,6 +2,7 @@ let nav = 0; //navigator created to navigate the months o-ths month, +1--> next 
 let clicked = null; //same as before but for the day
 let events = localStorage.getItem('events') ? JSON.parse(localStorage.getItem('events')) : [];//check later   
 
+
 const calendar =document.getElementById('calendar');
 const newEventModal = document.getElementById('newEventModal');
 const backDrop = document.getElementById('modalBackDrop');
@@ -9,16 +10,24 @@ const eventTitleInput = document.getElementById('EventTitleInput')
 // Get the button element
 const timeButton = document.querySelector('timeButton');
 
-const weekdays = ['Sunday', 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; //List order does not matter here
+const nameOfDays = ['Sunday', 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']; //List order does not matter here
 
-const threshSwipe = 100
-const COOLDOWN = 200;           // minimum delay between month changes (ms)
+const threshSwipe = 200;
+const cooldown = 500;           // minimum delay between month changes (ms)
 
 let scrollAccumulator = 0;
-let isScrolling = false;
-let scrollTimeout = null;
+let gestureInProgress = false;
 
 
+// Adding the weekdays
+
+const monthDay = document.getElementById('weekdays')
+nameOfDays.forEach(name =>{
+
+   const partWeek = document.createElement('div')
+   partWeek.textContent = name
+   monthDay.appendChild(partWeek)
+})
 
 
 
@@ -71,9 +80,9 @@ function load(){
         month: 'numeric',
         day: 'numeric',
      });
-     const paddingDays = weekdays.indexOf(dateString.split(', ')[0]);
+     const paddingDays = nameOfDays.indexOf(dateString.split(', ')[0]);
 
-    document.getElementById('monthDisplay').innerText = `${dt.toLocaleDateString('en-uk',{ month: 'long'})} ${year}`;
+    document.getElementById('monthTitle').innerText = `${dt.toLocaleDateString('en-uk',{ month: 'long'})} ${year}`;
 
     remainder = (paddingDays+daysInMonth)%7
     remainder ==0 ? totday = paddingDays+daysInMonth : totday = (7-remainder)+paddingDays+daysInMonth  // calculate the number of padding days for rectangualar matrix with
@@ -103,55 +112,54 @@ function closeModal(){
 }
 
 function saveEvent(){
-     if (eventTitleInput.value){
+     if (!eventTitleInput.value){
         eventTitleInput.classList.remove('error')
-     } else {
-        eventTitleInput.classList.add('error')
-     }
+        return;
+     } 
+     eventTitleInput.classList.remove('error');
 
-}
+     events.push({
+        date: clicked,
+        title: eventTitleInput.value
+     });
 
-function triggerScrollCooldown() {
-    isScrolling = true;
-    scrollAccumulator = 0; // reset after switching month
-
-    setTimeout(() => {
-        isScrolling = false;
-    }, COOLDOWN);
+    localStorage.setItem('events', JSON.stringify(events));
+    closeModal();
 }
 
 window.onload = function () {
 
    // Trackpad/mouse vertical scroll
    calendar.addEventListener('wheel', e => {
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
 
-       // Accumulate deltaY
-      scrollAccumulator += e.deltaY;
+      e.preventDefault();
 
-       // Prevent page horizontal scroll
-       e.preventDefault();
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return; //verify user scrolls in right direction
+      if (gestureInProgress) return;
+       // Accumulate deltaX
+      scrollAccumulator += e.deltaX;
+
+       // Prevent embedded computer movement
+       
 
       // If we're currently processing a month change, ignore events
-      if (isScrolling) return;
-
-      // Check threshold
-      if (scrollAccumulator > threshSwipe) {
-          nav++;
+      if (scrollAccumulator >= threshSwipe){
+         nav++;
          load();
-         triggerScrollCooldown();
-      } else if (scrollAccumulator < -threshSwipe) {
+         gestureInProgress = true;
+         scrollAccumulator=0;
+         setTimeout(() => gestureInProgress = false, cooldown)
+
+      }
+      else if (scrollAccumulator <= -threshSwipe){
          nav--;
          load();
-         triggerScrollCooldown();
+         gestureInProgress = true;
+         scrollAccumulator=0;
+         setTimeout(() => gestureInProgress = false, cooldown)
       }
-      // Reset accumulator after inactivity (prevents “stuck” behavior)
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        scrollAccumulator = 0;
-      }, 150);
    });
-};
+}
 
 document.getElementById('saveButton').addEventListener('click', saveEvent);
 document.getElementById('cancelButton').addEventListener('click', closeModal); 
